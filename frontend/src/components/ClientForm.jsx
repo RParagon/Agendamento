@@ -1,4 +1,3 @@
-// frontend/src/components/ClientForm.jsx
 import React, { useState, useEffect } from 'react';
 
 function ClientForm() {
@@ -14,7 +13,14 @@ function ClientForm() {
   useEffect(() => {
     fetch('/.netlify/functions/services')
       .then(res => res.json())
-      .then(data => setServicos(data))
+      .then(data => {
+        if (Array.isArray(data)) {
+          setServicos(data);
+        } else {
+          console.error('Dados recebidos não são um array:', data);
+          setServicos([]);
+        }
+      })
       .catch(err => console.error(err));
   }, []);
 
