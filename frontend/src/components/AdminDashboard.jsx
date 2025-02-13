@@ -1,99 +1,59 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Container, Typography, Table, TableBody, TableCell, TableHead, TableRow, Paper } from '@mui/material';
+import axios from 'axios';
 
-function AdminDashboard() {
-  const [config, setConfig] = useState({ whatsappRedirect: '' });
-  const [servicos, setServicos] = useState([]);
-  const [novoServico, setNovoServico] = useState({ nome: '' });
+const AdminDashboard = () => {
+  const [appointments, setAppointments] = useState([]);
 
-  // Carrega configurações do admin
   useEffect(() => {
-    fetch('/.netlify/functions/admin')
-      .then(res => res.json())
-      .then(data => {
-        if (data && typeof data === 'object') {
-          setConfig(data);
-        } else {
-          console.error('Config inválida recebida:', data);
-        }
-      })
-      .catch(err => console.error('Erro ao carregar config:', err));
+    const fetchAppointments = async () => {
+      try {
+        // Certifique-se de enviar o token de autorização conforme a implementação do backend.
+        const res = await axios.get('/.netlify/functions/admin', {
+          headers: {
+            Authorization: 'SEU_TOKEN_AQUI'
+          }
+        });
+        setAppointments(res.data.appointments);
+      } catch (error) {
+        console.error('Erro ao carregar agendamentos:', error);
+      }
+    };
+
+    fetchAppointments();
   }, []);
-
-  // Carrega serviços
-  useEffect(() => {
-    fetch('/.netlify/functions/services')
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setServicos(data);
-        } else {
-          console.error('Dados de serviços não são um array:', data);
-          setServicos([]);
-        }
-      })
-      .catch(err => console.error('Erro ao carregar serviços:', err));
-  }, []);
-
-  const salvarConfig = () => {
-    fetch('/.netlify/functions/admin', {
-      method: 'POST',
-      body: JSON.stringify(config),
-    })
-      .then(res => res.json())
-      .then(data => {
-        alert('Configurações salvas!');
-        setConfig(data);
-      })
-      .catch(err => console.error('Erro ao salvar config:', err));
-  };
-
-  const criarServico = () => {
-    fetch('/.netlify/functions/services', {
-      method: 'POST',
-      body: JSON.stringify(novoServico),
-    })
-      .then(res => res.json())
-      .then(data => {
-        alert('Serviço criado!');
-        setServicos([...servicos, data]);
-        setNovoServico({ nome: '' });
-      })
-      .catch(err => console.error('Erro ao criar serviço:', err));
-  };
 
   return (
-    <div style={{ margin: '20px' }}>
-      <h1>Dashboard Admin</h1>
-      <section>
-        <h2>Configurações</h2>
-        <label>
-          WhatsApp Redirect:
-          <input
-            type="text"
-            value={config.whatsappRedirect || ''}
-            onChange={(e) =>
-              setConfig({ ...config, whatsappRedirect: e.target.value })
-            }
-          />
-        </label>
-        <button onClick={salvarConfig}>Salvar Config</button>
-      </section>
-      <section>
-        <h2>Serviços</h2>
-        <ul>
-          {servicos.map((s) => (
-            <li key={s._id}>{s.nome}</li>
-          ))}
-        </ul>
-        <input
-          type="text"
-          value={novoServico.nome}
-          onChange={(e) => setNovoServico({ nome: e.target.value })}
-        />
-        <button onClick={criarServico}>Adicionar Serviço</button>
-      </section>
-    </div>
+    <Container maxWidth="lg" sx={{ mt: 4 }}>
+      <Typography variant="h4" component="h1" gutterBottom>
+        Painel Administrativo
+      </Typography>
+      <Paper>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Nome</TableCell>
+              <TableCell>Telefone</TableCell>
+              <TableCell>Serviço</TableCell>
+              <TableCell>Data</TableCell>
+              <TableCell>Status</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {appointments.map((apt) => (
+              <TableRow key={apt._id}>
+                <TableCell>{apt.name}</TableCell>
+                <TableCell>{apt.phone}</TableCell>
+                <TableCell>{apt.service}</TableCell>
+                <TableCell>{new Date(apt.date).toLocaleDateString()}</TableCell>
+                <TableCell>{apt.status}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Paper>
+    </Container>
   );
-}
+};
 
 export default AdminDashboard;

@@ -1,17 +1,23 @@
-// functions/utils/db.js
-const mongoose = require('mongoose');
+const { MongoClient } = require('mongodb');
 
-let isConnected = false;
+const uri = process.env.MONGODB_URI;
+const options = {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+};
 
-async function connectToDB() {
-  if (!isConnected) {
-    await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    isConnected = true;
-    console.log('Conectado ao MongoDB!');
-  }
+let client;
+let clientPromise;
+
+if (!process.env.MONGODB_URI) {
+  throw new Error('Por favor, defina a variável MONGODB_URI no ambiente.');
 }
 
-module.exports = { connectToDB };
+if (!global._mongoClientPromise) {
+  client = new MongoClient(uri, options);
+  global._mongoClientPromise = client.connect();
+}
+
+clientPromise = global._mongoClientPromise;
+
+module.exports = clientPromise;

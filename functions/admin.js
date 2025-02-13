@@ -1,41 +1,47 @@
-// functions/admin.js
-const { connectToDB } = require('./utils/db');
-const { Config } = require('./utils/models');
+const clientPromise = require('./utils/db');
+const jwt = require('jsonwebtoken');
 
-exports.handler = async (event, context) => {
-  await connectToDB();
-  const method = event.httpMethod;
+const ADMIN_SECRET = process.env.ADMIN_SECRET || 'supersecret';
+
+exports.handler = async function (event, context) {
+  if (event.httpMethod !== 'GET') {
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ message: 'Método não permitido' })
+    };
+  }
+
+  const token = event.headers.authorization;
+  if (!token) {
+    return {
+      statusCode: 401,
+      body: JSON.stringify({ message: 'Não autorizado' })
+    };
+  }
 
   try {
-    if (method === 'GET') {
-      const config = await Config.findOne();
-      return {
-        statusCode: 200,
-        body: JSON.stringify(config),
-      };
-    } else if (method === 'POST' || method === 'PUT') {
-      const data = JSON.parse(event.body);
-      let config = await Config.findOne();
-      if (!config) {
-        config = await Config.create(data);
-      } else {
-        Object.assign(config, data);
-        await config.save();
-      }
-      return {
-        statusCode: 200,
-        body: JSON.stringify(config),
-      };
-    } else {
-      return {
-        statusCode: 405,
-        body: 'Método não suportado.',
-      };
-    }
+    jwt.verify(token, ADMIN_SECRET);
+  } catch (err) {
+    return {
+      statusCode: 403,
+      body: JSON.stringify({ message: 'Acesso negado' })
+    };
+  }
+
+  try {
+    const client = await clientPromise;
+    const db = client.db('agendamentoDB');
+    const appointments = await db.collection('appointments').find().toArray();
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ appointments })
+    };
   } catch (error) {
+    console.error('Erro ao obter agendamentos:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: error.message }),
+      body: JSON.stringify({ message: 'Erro interno do servidor' })
     };
   }
 };
