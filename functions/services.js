@@ -1,14 +1,14 @@
-function generateWhatsAppLink(appointment) {
-  const baseUrl = 'https://wa.me/';
-  const whatsappNumber = process.env.WHATSAPP_NUMBER || '5511999999999';
-  
-  const message = `Olá, gostaria de confirmar meu agendamento:
-Nome: ${appointment.name}
-Serviço: ${appointment.service}
-Data: ${appointment.date.toLocaleDateString()}`;
+const { saveBookingToDB, fetchAllBookings } = require('./utils/db');
 
-  const encodedMessage = encodeURIComponent(message);
-  return `${baseUrl}${whatsappNumber}?text=${encodedMessage}`;
+async function createBooking(data) {
+  // Possíveis validações adicionais podem ser aplicadas aqui
+  const booking = await saveBookingToDB(data);
+  return booking;
 }
 
-module.exports = { generateWhatsAppLink };
+async function getAllBookings() {
+  const bookings = await fetchAllBookings();
+  return bookings;
+}
+
+module.exports = { createBooking, getAllBookings };

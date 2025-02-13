@@ -1,58 +1,34 @@
-// functions/agendamento.js
-const { connectToDB } = require('./utils/db');
-const { Agendamento, Config } = require('./utils/models');
+const { createBooking } = require('./services');
 
 exports.handler = async (event, context) => {
-  await connectToDB();
-  const method = event.httpMethod;
-
-  if (method === 'POST') {
-    try {
-      const dados = JSON.parse(event.body);
-      const { nomeCliente, telefoneCliente, data, hora, servico } = dados;
-
-      // Verifica se já existe agendamento nesse dia/hora
-      const jaExistente = await Agendamento.findOne({ data, hora });
-      if (jaExistente) {
-        return {
-          statusCode: 409,
-          body: JSON.stringify({ message: 'Horário indisponível.' }),
-        };
-      }
-
-      // Cria agendamento
-      const novoAgendamento = await Agendamento.create({
-        nomeCliente,
-        telefoneCliente,
-        data,
-        hora,
-        servico,
-      });
-
-      // Pega configuração para o redirecionamento
-      const config = await Config.findOne();
-      let whatsappNumber = config ? config.whatsappRedirect : '';
-
-      // Monta URL de WhatsApp
-      const mensagem = encodeURIComponent(
-        `Olá! Quero confirmar meu agendamento para ${data} às ${hora}, serviço: ${servico}.`
-      );
-      const redirectUrl = `https://wa.me/${whatsappNumber}?text=${mensagem}`;
-
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ redirectUrl, agendamento: novoAgendamento }),
-      };
-    } catch (error) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: error.message }),
-      };
-    }
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
-  return {
-    statusCode: 405,
-    body: 'Método não suportado.',
-  };
+  try {
+    const data = JSON.parse(event.body);
+    const { name, phone, email, service, date } = data;
+    if (!name || !phone || !email || !service || !date) {
+      return { statusCode: 400, body: JSON.stringify({ message: 'Missing required fields' }) };
+    }
+
+    // Cria o agendamento no "banco de dados"
+    const booking = await createBooking(data);
+
+    // Gera a URL do WhatsApp para confirmação
+    const message = `Olá ${name}, seu agendamento para ${service} em ${date} foi confirmado.`;
+    const whatsappNumber = process.env.YOUR_PHONE_NUMBER || '5511999999999';
+    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ booking, whatsappUrl })
+    };
+  } catch (error) {
+    console.error('Erro em agendamento:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ message: 'Internal Server Error', error: error.message })
+    };
+  }
 };

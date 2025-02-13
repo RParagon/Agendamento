@@ -1,47 +1,31 @@
-const clientPromise = require('./utils/db');
-const jwt = require('jsonwebtoken');
+const { getAllBookings } = require('./services');
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
 
-const ADMIN_SECRET = process.env.ADMIN_SECRET || 'supersecret';
-
-exports.handler = async function (event, context) {
+exports.handler = async (event, context) => {
+  // Apenas permite método GET
   if (event.httpMethod !== 'GET') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ message: 'Método não permitido' })
-    };
+    return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
+  // Validação simples do token de autorização
   const token = event.headers.authorization;
-  if (!token) {
+  if (!token || token !== ADMIN_TOKEN) {
     return {
       statusCode: 401,
-      body: JSON.stringify({ message: 'Não autorizado' })
+      body: JSON.stringify({ message: 'Unauthorized' })
     };
   }
 
   try {
-    jwt.verify(token, ADMIN_SECRET);
-  } catch (err) {
-    return {
-      statusCode: 403,
-      body: JSON.stringify({ message: 'Acesso negado' })
-    };
-  }
-
-  try {
-    const client = await clientPromise;
-    const db = client.db('agendamentoDB');
-    const appointments = await db.collection('appointments').find().toArray();
-
+    const bookings = await getAllBookings();
     return {
       statusCode: 200,
-      body: JSON.stringify({ appointments })
+      body: JSON.stringify({ bookings })
     };
   } catch (error) {
-    console.error('Erro ao obter agendamentos:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: 'Erro interno do servidor' })
+      body: JSON.stringify({ message: 'Internal Server Error', error: error.message })
     };
   }
 };

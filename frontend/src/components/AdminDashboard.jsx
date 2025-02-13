@@ -1,58 +1,59 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Typography, Table, TableBody, TableCell, TableHead, TableRow, Paper } from '@mui/material';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 const AdminDashboard = () => {
-  const [appointments, setAppointments] = useState([]);
+  const [bookings, setBookings] = useState([]);
 
   useEffect(() => {
-    const fetchAppointments = async () => {
+    const fetchBookings = async () => {
       try {
-        // Certifique-se de enviar o token de autorização conforme a implementação do backend.
-        const res = await axios.get('/.netlify/functions/admin', {
-          headers: {
-            Authorization: 'SEU_TOKEN_AQUI'
-          }
+        // Certifique-se de que o token admin esteja configurado no ambiente
+        const response = await axios.get('/.netlify/functions/admin', {
+          headers: { authorization: process.env.REACT_APP_ADMIN_TOKEN }
         });
-        setAppointments(res.data.appointments);
+        setBookings(response.data.bookings);
       } catch (error) {
-        console.error('Erro ao carregar agendamentos:', error);
+        console.error('Erro ao buscar agendamentos:', error);
       }
     };
 
-    fetchAppointments();
+    fetchBookings();
   }, []);
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Painel Administrativo
-      </Typography>
-      <Paper>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Nome</TableCell>
-              <TableCell>Telefone</TableCell>
-              <TableCell>Serviço</TableCell>
-              <TableCell>Data</TableCell>
-              <TableCell>Status</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {appointments.map((apt) => (
-              <TableRow key={apt._id}>
-                <TableCell>{apt.name}</TableCell>
-                <TableCell>{apt.phone}</TableCell>
-                <TableCell>{apt.service}</TableCell>
-                <TableCell>{new Date(apt.date).toLocaleDateString()}</TableCell>
-                <TableCell>{apt.status}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Paper>
-    </Container>
+    <div className="admin-dashboard">
+      <h1>Dashboard Administrativo</h1>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Telefone</th>
+            <th>Email</th>
+            <th>Serviço</th>
+            <th>Data</th>
+          </tr>
+        </thead>
+        <tbody>
+          {bookings.length > 0 ? (
+            bookings.map((booking) => (
+              <tr key={booking.id}>
+                <td>{booking.id}</td>
+                <td>{booking.name}</td>
+                <td>{booking.phone}</td>
+                <td>{booking.email}</td>
+                <td>{booking.service}</td>
+                <td>{booking.date}</td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="6">Nenhum agendamento encontrado.</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
   );
 };
 

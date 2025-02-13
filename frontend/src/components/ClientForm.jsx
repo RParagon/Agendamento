@@ -1,96 +1,89 @@
 import React from 'react';
-import { useFormik } from 'formik';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { TextField, Button, Container, Typography, Box } from '@mui/material';
 import axios from 'axios';
 
 const ClientForm = () => {
-  const formik = useFormik({
-    initialValues: {
-      name: '',
-      phone: '',
-      service: '',
-      date: ''
-    },
-    validationSchema: Yup.object({
-      name: Yup.string().required('Obrigatório'),
-      phone: Yup.string().required('Obrigatório'),
-      service: Yup.string().required('Obrigatório'),
-      date: Yup.date().required('Obrigatório')
-    }),
-    onSubmit: async (values) => {
-      try {
-        const response = await axios.post('/.netlify/functions/agendamento', values);
-        if (response.status === 200) {
-          // Redireciona para o WhatsApp com o link gerado no backend
-          const { whatsappLink } = response.data;
-          window.location.href = whatsappLink;
-        }
-      } catch (error) {
-        console.error('Erro ao agendar:', error);
-      }
-    }
+  const initialValues = {
+    name: '',
+    phone: '',
+    email: '',
+    service: '',
+    date: ''
+  };
+
+  const validationSchema = Yup.object({
+    name: Yup.string().required('Nome é obrigatório'),
+    phone: Yup.string().required('Telefone é obrigatório'),
+    email: Yup.string().email('Email inválido').required('Email é obrigatório'),
+    service: Yup.string().required('Serviço é obrigatório'),
+    date: Yup.date().required('Data é obrigatória')
   });
 
+  const handleSubmit = async (values, { setSubmitting, resetForm }) => {
+    try {
+      // Chama a função serverless para criar o agendamento
+      const response = await axios.post('/.netlify/functions/agendamento', values);
+      if (response.data && response.data.whatsappUrl) {
+        // Redireciona para o WhatsApp
+        window.location.href = response.data.whatsappUrl;
+      }
+    } catch (error) {
+      console.error('Erro ao agendar serviço:', error);
+      alert('Erro ao agendar serviço. Tente novamente.');
+    }
+    setSubmitting(false);
+    resetForm();
+  };
+
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Agende seu Serviço
-        </Typography>
-        <form onSubmit={formik.handleSubmit}>
-          <TextField
-            fullWidth
-            id="name"
-            name="name"
-            label="Nome"
-            margin="normal"
-            value={formik.values.name}
-            onChange={formik.handleChange}
-            error={formik.touched.name && Boolean(formik.errors.name)}
-            helperText={formik.touched.name && formik.errors.name}
-          />
-          <TextField
-            fullWidth
-            id="phone"
-            name="phone"
-            label="Telefone"
-            margin="normal"
-            value={formik.values.phone}
-            onChange={formik.handleChange}
-            error={formik.touched.phone && Boolean(formik.errors.phone)}
-            helperText={formik.touched.phone && formik.errors.phone}
-          />
-          <TextField
-            fullWidth
-            id="service"
-            name="service"
-            label="Serviço"
-            margin="normal"
-            value={formik.values.service}
-            onChange={formik.handleChange}
-            error={formik.touched.service && Boolean(formik.errors.service)}
-            helperText={formik.touched.service && formik.errors.service}
-          />
-          <TextField
-            fullWidth
-            id="date"
-            name="date"
-            label="Data do Agendamento"
-            margin="normal"
-            type="date"
-            InputLabelProps={{ shrink: true }}
-            value={formik.values.date}
-            onChange={formik.handleChange}
-            error={formik.touched.date && Boolean(formik.errors.date)}
-            helperText={formik.touched.date && formik.errors.date}
-          />
-          <Button color="primary" variant="contained" fullWidth type="submit" sx={{ mt: 2 }}>
-            Agendar
-          </Button>
-        </form>
-      </Box>
-    </Container>
+    <div className="client-form">
+      <h1>Agende seu Serviço</h1>
+      <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={handleSubmit}>
+        {({ isSubmitting }) => (
+          <Form>
+            <div className="form-group">
+              <label htmlFor="name">Nome:</label>
+              <Field type="text" name="name" id="name" />
+              <ErrorMessage name="name" component="div" className="error" />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="phone">Telefone:</label>
+              <Field type="text" name="phone" id="phone" placeholder="(xx) xxxxx-xxxx" />
+              <ErrorMessage name="phone" component="div" className="error" />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="email">Email:</label>
+              <Field type="email" name="email" id="email" />
+              <ErrorMessage name="email" component="div" className="error" />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="service">Serviço:</label>
+              <Field as="select" name="service" id="service">
+                <option value="">Selecione um serviço</option>
+                <option value="servico1">Serviço 1</option>
+                <option value="servico2">Serviço 2</option>
+                <option value="servico3">Serviço 3</option>
+              </Field>
+              <ErrorMessage name="service" component="div" className="error" />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="date">Data:</label>
+              <Field type="date" name="date" id="date" />
+              <ErrorMessage name="date" component="div" className="error" />
+            </div>
+
+            <button type="submit" disabled={isSubmitting}>
+              Agendar
+            </button>
+          </Form>
+        )}
+      </Formik>
+    </div>
   );
 };
 

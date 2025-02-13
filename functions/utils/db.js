@@ -1,23 +1,14 @@
-const { MongoClient } = require('mongodb');
+// Armazenamento em memória
+let bookings = [];
 
-const uri = process.env.MONGODB_URI;
-const options = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-};
-
-let client;
-let clientPromise;
-
-if (!process.env.MONGODB_URI) {
-  throw new Error('Por favor, defina a variável MONGODB_URI no ambiente.');
+async function saveBookingToDB(data) {
+  const newBooking = { id: bookings.length + 1, ...data };
+  bookings.push(newBooking);
+  return newBooking;
 }
 
-if (!global._mongoClientPromise) {
-  client = new MongoClient(uri, options);
-  global._mongoClientPromise = client.connect();
+async function fetchAllBookings() {
+  return bookings;
 }
 
-clientPromise = global._mongoClientPromise;
-
-module.exports = clientPromise;
+module.exports = { saveBookingToDB, fetchAllBookings };
