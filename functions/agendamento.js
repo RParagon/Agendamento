@@ -3,27 +3,24 @@ const { connectToDB } = require('./utils/db');
 const { Agendamento, Config } = require('./utils/models');
 
 exports.handler = async (event, context) => {
-  const method = event.httpMethod;
-
   await connectToDB();
+  const method = event.httpMethod;
 
   if (method === 'POST') {
     try {
       const dados = JSON.parse(event.body);
       const { nomeCliente, telefoneCliente, data, hora, servico } = dados;
 
-      // Verificar se já existe agendamento para o mesmo dia/hora
+      // Verifica se já existe agendamento nesse dia/hora
       const jaExistente = await Agendamento.findOne({ data, hora });
       if (jaExistente) {
         return {
-          statusCode: 409, // Conflito
-          body: JSON.stringify({
-            message: 'Horário indisponível. Selecione outro horário.',
-          }),
+          statusCode: 409,
+          body: JSON.stringify({ message: 'Horário indisponível.' }),
         };
       }
 
-      // Criar agendamento
+      // Cria agendamento
       const novoAgendamento = await Agendamento.create({
         nomeCliente,
         telefoneCliente,
@@ -32,18 +29,16 @@ exports.handler = async (event, context) => {
         servico,
       });
 
-      // Buscar configuração para redirecionar ao WhatsApp
+      // Pega configuração para o redirecionamento
       const config = await Config.findOne();
-      let whatsappRedirect = config ? config.whatsappRedirect : '';
+      let whatsappNumber = config ? config.whatsappRedirect : '';
 
-      // Montar a URL de redirecionamento (WhatsApp)
-      // Exemplo: https://wa.me/SEU_NUMERO?text=MENSAGEM...
+      // Monta URL de WhatsApp
       const mensagem = encodeURIComponent(
         `Olá! Quero confirmar meu agendamento para ${data} às ${hora}, serviço: ${servico}.`
       );
-      const redirectUrl = `https://wa.me/${whatsappRedirect}?text=${mensagem}`;
+      const redirectUrl = `https://wa.me/${whatsappNumber}?text=${mensagem}`;
 
-      // Retornar URL para o front-end redirecionar
       return {
         statusCode: 200,
         body: JSON.stringify({ redirectUrl, agendamento: novoAgendamento }),

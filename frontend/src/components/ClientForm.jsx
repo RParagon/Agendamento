@@ -10,8 +10,8 @@ function ClientForm() {
   const [servicoSelecionado, setServicoSelecionado] = useState('');
   const [mensagem, setMensagem] = useState('');
 
-  // Buscar lista de serviços no backend
   useEffect(() => {
+    // Carrega lista de serviços
     fetch('/.netlify/functions/services')
       .then(res => res.json())
       .then(data => setServicos(data))
@@ -38,12 +38,13 @@ function ClientForm() {
       const result = await response.json();
 
       if (response.status === 409) {
-        setMensagem(result.message); // "Horário indisponível."
+        // Horário indisponível
+        setMensagem(result.message);
       } else if (response.ok) {
         // Redirecionar para o WhatsApp
         window.location.href = result.redirectUrl;
       } else {
-        setMensagem('Erro ao agendar. Tente novamente.');
+        setMensagem('Erro ao agendar.');
       }
     } catch (err) {
       setMensagem('Erro de rede: ' + err.message);
@@ -55,60 +56,60 @@ function ClientForm() {
       <h2>Agendamento</h2>
       {mensagem && <p>{mensagem}</p>}
       <form onSubmit={handleAgendar}>
-        <label>Nome:
-          <input
-            type="text"
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            required
-          />
-        </label>
+        <label>Nome:</label>
+        <input
+          type="text"
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+          required
+        />
+
         <br />
 
-        <label>Telefone:
-          <input
-            type="text"
-            value={telefone}
-            onChange={(e) => setTelefone(e.target.value)}
-            required
-          />
-        </label>
+        <label>Telefone:</label>
+        <input
+          type="text"
+          value={telefone}
+          onChange={(e) => setTelefone(e.target.value)}
+          required
+        />
+
         <br />
 
-        <label>Data:
-          <input
-            type="date"
-            value={data}
-            onChange={(e) => setData(e.target.value)}
-            required
-          />
-        </label>
+        <label>Data:</label>
+        <input
+          type="date"
+          value={data}
+          onChange={(e) => setData(e.target.value)}
+          required
+        />
+
         <br />
 
-        <label>Hora:
-          <input
-            type="time"
-            value={hora}
-            onChange={(e) => setHora(e.target.value)}
-            required
-          />
-        </label>
+        <label>Hora:</label>
+        <input
+          type="time"
+          value={hora}
+          onChange={(e) => setHora(e.target.value)}
+          required
+        />
+
         <br />
 
-        <label>Serviço:
-          <select
-            value={servicoSelecionado}
-            onChange={(e) => setServicoSelecionado(e.target.value)}
-            required
-          >
-            <option value="">Selecione um serviço</option>
-            {servicos.map((serv) => (
-              <option key={serv._id} value={serv.nome}>
-                {serv.nome}
-              </option>
-            ))}
-          </select>
-        </label>
+        <label>Serviço:</label>
+        <select
+          value={servicoSelecionado}
+          onChange={(e) => setServicoSelecionado(e.target.value)}
+          required
+        >
+          <option value="">Selecione um serviço</option>
+          {servicos.map((serv) => (
+            <option key={serv._id} value={serv.nome}>
+              {serv.nome}
+            </option>
+          ))}
+        </select>
+
         <br />
 
         <button type="submit">Agendar</button>

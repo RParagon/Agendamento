@@ -6,7 +6,7 @@ function AdminDashboard() {
   const [servicos, setServicos] = useState([]);
   const [novoServico, setNovoServico] = useState({ nome: '' });
 
-  // Carregar config
+  // Carrega config
   useEffect(() => {
     fetch('/.netlify/functions/admin')
       .then(res => res.json())
@@ -16,7 +16,7 @@ function AdminDashboard() {
       .catch(err => console.error(err));
   }, []);
 
-  // Carregar serviços
+  // Carrega serviços
   useEffect(() => {
     fetch('/.netlify/functions/services')
       .then(res => res.json())
@@ -54,6 +54,7 @@ function AdminDashboard() {
   return (
     <div style={{ margin: '20px' }}>
       <h1>Dashboard Admin</h1>
+
       <section>
         <h2>Configurações</h2>
         <label>WhatsApp Redirect:
@@ -74,7 +75,7 @@ function AdminDashboard() {
         <input
           type="text"
           value={novoServico.nome}
-          onChange={(e) => setNovoServico({ ...novoServico, nome: e.target.value })}
+          onChange={(e) => setNovoServico({ nome: e.target.value })}
         />
         <button onClick={criarServico}>Adicionar Serviço</button>
       </section>

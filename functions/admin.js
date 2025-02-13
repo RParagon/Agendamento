@@ -3,9 +3,8 @@ const { connectToDB } = require('./utils/db');
 const { Config } = require('./utils/models');
 
 exports.handler = async (event, context) => {
-  const method = event.httpMethod;
-
   await connectToDB();
+  const method = event.httpMethod;
 
   try {
     if (method === 'GET') {
@@ -27,9 +26,7 @@ exports.handler = async (event, context) => {
         statusCode: 200,
         body: JSON.stringify(config),
       };
-    }
-    // ...
-    else {
+    } else {
       return {
         statusCode: 405,
         body: 'Método não suportado.',

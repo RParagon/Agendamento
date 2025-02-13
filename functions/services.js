@@ -3,10 +3,8 @@ const { connectToDB } = require('./utils/db');
 const { Servico } = require('./utils/models');
 
 exports.handler = async (event, context) => {
-  // Permitir somente métodos GET, POST, PUT, DELETE, por ex.
-  const method = event.httpMethod;
-
   await connectToDB();
+  const method = event.httpMethod;
 
   try {
     if (method === 'GET') {
@@ -16,8 +14,7 @@ exports.handler = async (event, context) => {
         statusCode: 200,
         body: JSON.stringify(servicos),
       };
-    }
-    else if (method === 'POST') {
+    } else if (method === 'POST') {
       // Criar novo serviço
       const dados = JSON.parse(event.body);
       const novoServico = await Servico.create(dados);
@@ -26,7 +23,7 @@ exports.handler = async (event, context) => {
         body: JSON.stringify(novoServico),
       };
     }
-    // ...PUT, DELETE etc.
+    // Aqui você pode implementar PUT, DELETE, etc.
     else {
       return {
         statusCode: 405,
