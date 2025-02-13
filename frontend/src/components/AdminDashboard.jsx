@@ -1,4 +1,3 @@
-// frontend/src/components/AdminDashboard.jsx
 import React, { useEffect, useState } from 'react';
 
 function AdminDashboard() {
@@ -6,22 +5,33 @@ function AdminDashboard() {
   const [servicos, setServicos] = useState([]);
   const [novoServico, setNovoServico] = useState({ nome: '' });
 
-  // Carrega config
+  // Carrega configurações do admin
   useEffect(() => {
     fetch('/.netlify/functions/admin')
       .then(res => res.json())
       .then(data => {
-        if (data) setConfig(data);
+        if (data && typeof data === 'object') {
+          setConfig(data);
+        } else {
+          console.error('Config inválida recebida:', data);
+        }
       })
-      .catch(err => console.error(err));
+      .catch(err => console.error('Erro ao carregar config:', err));
   }, []);
 
   // Carrega serviços
   useEffect(() => {
     fetch('/.netlify/functions/services')
       .then(res => res.json())
-      .then(data => setServicos(data))
-      .catch(err => console.error(err));
+      .then(data => {
+        if (Array.isArray(data)) {
+          setServicos(data);
+        } else {
+          console.error('Dados de serviços não são um array:', data);
+          setServicos([]);
+        }
+      })
+      .catch(err => console.error('Erro ao carregar serviços:', err));
   }, []);
 
   const salvarConfig = () => {
@@ -34,7 +44,7 @@ function AdminDashboard() {
         alert('Configurações salvas!');
         setConfig(data);
       })
-      .catch(err => console.error(err));
+      .catch(err => console.error('Erro ao salvar config:', err));
   };
 
   const criarServico = () => {
@@ -48,29 +58,32 @@ function AdminDashboard() {
         setServicos([...servicos, data]);
         setNovoServico({ nome: '' });
       })
-      .catch(err => console.error(err));
+      .catch(err => console.error('Erro ao criar serviço:', err));
   };
 
   return (
     <div style={{ margin: '20px' }}>
       <h1>Dashboard Admin</h1>
-
       <section>
         <h2>Configurações</h2>
-        <label>WhatsApp Redirect:
+        <label>
+          WhatsApp Redirect:
           <input
             type="text"
             value={config.whatsappRedirect || ''}
-            onChange={(e) => setConfig({ ...config, whatsappRedirect: e.target.value })}
+            onChange={(e) =>
+              setConfig({ ...config, whatsappRedirect: e.target.value })
+            }
           />
         </label>
         <button onClick={salvarConfig}>Salvar Config</button>
       </section>
-
       <section>
         <h2>Serviços</h2>
         <ul>
-          {servicos.map(s => <li key={s._id}>{s.nome}</li>)}
+          {servicos.map((s) => (
+            <li key={s._id}>{s.nome}</li>
+          ))}
         </ul>
         <input
           type="text"
